@@ -7,11 +7,12 @@
 #include <ESPAsyncWebServer.h>
 
 // Replace with your network credentials
-const char* ssid = "*******";
+const char* ssid = "*******"; // Colocar nome da rede e senha
 const char* password = "*******";
 
-bool ledState = 0;
-const int ledPin = 26;
+bool ledState = 0; // Remover
+// Adicionar uma variavel para o angulo do servo
+const int ledPin = 26; // Mudar para pino do servo
 
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
@@ -119,23 +120,14 @@ const char index_html[] PROGMEM = R"rawliteral(
     </div>
     <div class="content">
       <div class="card">
-
-
         <p class="state">Status do Servo-Motor: <span id="demo"></span></p>
-
-
-
         <label for="motor">Motor State (between 0 and 180):</label>
-
         <input type="range" name="motor" min="0" max="180" value="90" step="1" class="slider" id="motorange" onchange="sliderChange()">
-
-
-
       </div>
     </div>
 
     <script>
-      var gateway = `ws://${window.location.hostname}/ws`;
+  var gateway = `ws://${window.location.hostname}/ws`;
   var websocket;
   window.addEventListener('load', onLoad);
   function initWebSocket() {
@@ -152,6 +144,8 @@ const char index_html[] PROGMEM = R"rawliteral(
     console.log('Connection closed');
     setTimeout(initWebSocket, 2000);
   }
+  // Mudar a funcao onMessage para que mude o valor selecionado no slider quando receber a mensagem da ESP
+  // O valor enviado esta em event.data
   function onMessage(event) {
     var state;
     if (event.data == "1"){
@@ -160,21 +154,25 @@ const char index_html[] PROGMEM = R"rawliteral(
     else{
       state = "OFF";
     }
+    // O ID do spam é 'demo'
     document.getElementById('state').innerHTML = state;
   }
   function onLoad(event) {
     initWebSocket();
     initButton();
   }
+  // Pode remover essa funcao pois o evento ja esta escrito no html
   function initButton() {
     document.getElementById('button').addEventListener('click', toggle);
   }
+  // Remover essa funcao (o send sera feito na funcao sliderChange)
   function toggle(){
     websocket.send('toggle');
   }
-
+  
+  // Remover variavel
   let colour = 0;
-
+  // Remover funcao abaixo
   function led(){
     if(colour == 0){
       button.style.backgroundColor = "gray";
@@ -184,9 +182,10 @@ const char index_html[] PROGMEM = R"rawliteral(
     colour = 0;
     }
   }
-  */
+  
   function sliderChange(){
       output.innerHTML = slider.value;
+      // Adicionar websocket.send() enviando o valor do slider
   }
 
     let slider = document.getElementById("motorange");
@@ -199,6 +198,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 </html>
 )rawliteral";
 
+// Notifica os clientes mandando o angulo do servo, ao inves de ledState
 void notifyClients() {
   ws.textAll(String(ledState));
 }
@@ -207,7 +207,10 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
-    if (strcmp((char*)data, "toggle") == 0) {
+    if (strcmp((char*)data, "toggle") == 0) { // strcmp serve para comparar duas strings, nao precisa desse if ja que vamos mandar o valor do servo
+      // Aqui mudamos a variavel do angulo do servo
+      // Como recebemos uma string, devemos mudar para um int para escrever no servo
+      // Uma possibilidade seria fazer stoi(data)
       ledState = !ledState;
       notifyClients();
     }
@@ -237,6 +240,7 @@ void initWebSocket() {
   server.addHandler(&ws);
 }
 
+// Essa funcao pode retornar o valor do angulo do servo, transformando ele numa string
 String processor(const String& var){
   Serial.println(var);
   if(var == "STATE"){
@@ -250,12 +254,13 @@ String processor(const String& var){
   return String();
 }
 
+// Adicionar objeto do servo
 void setup(){
   // Serial port for debugging purposes
   Serial.begin(115200);
 
-  pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, LOW);
+  pinMode(ledPin, OUTPUT); // remover
+  digitalWrite(ledPin, LOW); // remover
   
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
@@ -276,9 +281,12 @@ void setup(){
 
   // Start server
   server.begin();
+
+  // Fazer attach do servo
 }
 
 void loop() {
   ws.cleanupClients();
-  digitalWrite(ledPin, ledState);
+  digitalWrite(ledPin, ledState); // Remover
+  // Adicionar comando para escrever o angulo (variavel declarada la em cima) no servo
 }
